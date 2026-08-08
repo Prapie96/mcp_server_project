@@ -54,7 +54,7 @@ CREATE USER mcp_readonly_user WITH PASSWORD 'postgres';
 GRANT CONNECT ON DATABASE mcp_db TO mcp_readonly_user;
 GRANT USAGE ON SCHEMA public TO mcp_readonly_user;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO mcp_readonly_user;
-
+GRANT INSERT ON interactions TO mcp_readonly_user;
 -- User and Permissions
 -- CREATE USER mcp_readonly_user WITH PASSWORD 'postgres';
 -- GRANT CONNECT ON DATABASE mcp_db TO mcp_readonly_user;

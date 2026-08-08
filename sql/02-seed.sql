@@ -4,7 +4,7 @@ INSERT INTO customers (id, first_name, last_name, email, phone) VALUES
 ('b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'Suda', 'Srisuk', 'suda.s@example.com', '0823456789'),
 ('c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'ณเดชน์', 'คูกิมิยะ', 'nadech.k@example.com', '0834567890'),
 ('d3eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'Urassaya', 'Sperbund', 'yaya.s@example.com', '0845678901'),
-('e4eebc99-9c0b-4ef8-bb6d-6bb9bd380a55', 'ประยุทธ์', 'จันทร์โอชา', 'prayut.c@example.com', '0856789012');
+('e4eebc99-9c0b-4ef8-bb6d-6bb9bd380a55', 'ประทีป', 'อรรถลักษณ์', 'prayut.c@example.com', '0856789012');
 
 -- 2. Interactions (5 Rows)
 -- INSERT INTO interactions (id, customer_id, interaction_type, content, embedding) VALUES

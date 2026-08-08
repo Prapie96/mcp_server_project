@@ -52,3 +52,21 @@ export async function search_customer_info(
   console.error("ผลลัพธ์ที่ได้จาก SQL:", customer.rows);
   return customer.rows;
 }
+
+export async function insert_customer_info({
+  email,
+  first_name,
+  last_name,
+  phone,
+}: Omit<Customer, "id" | "created_at">): Promise<string> {
+  const result = await pool.query<Pick<Customer, "id">>(
+    `
+        INSERT INTO customers(email,first_name,last_name,phone)
+        VALUES ($1,$2,$3,$4)
+        RETURNING id
+        `,
+    [email, first_name, last_name, phone],
+  );
+  console.error("ผลลัพธ์ที่ได้จาก SQL:", result.rows);
+  return result.rows[0].id;
+}
