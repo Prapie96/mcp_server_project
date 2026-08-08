@@ -1,0 +1,32 @@
+{
+  "name": "mcp_customer_chat",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.9",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "@types/pg": "^8.20.4",
+    "dotenv": "^17.4.2",
+    "openai": "^7.4.0",
+    "pg": "^8.22.0",
+    "pgvector": "^0.3.0",
+    "zod": "^4.4.3"
+  }
+}
