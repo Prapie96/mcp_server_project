@@ -1,8 +1,17 @@
-import dotenv from "dotenv";
+import "dotenv/config";
 import { Pool } from "pg";
 
+console.log(
+  "connection string seed database = ",
+  process.env.SEED_DATABASE_URL,
+);
+console.log("connection string database = ", process.env.DATABASE_URL);
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "",
+});
+
+export const seedPool = new Pool({
+  connectionString: process.env.SEED_DATABASE_URL,
 });
 
 pool.on("connect", () => {

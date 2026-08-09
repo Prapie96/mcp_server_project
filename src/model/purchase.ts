@@ -1,4 +1,4 @@
-type PurchaseModel = {
+export type PurchaseModel = {
   id: string;
   customer_id: string;
   total_amount: number;

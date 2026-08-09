@@ -25,7 +25,9 @@ CREATE TABLE interactions (
 -- Purchase Table
 CREATE TABLE purchase (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    previous_purchase_id UUID  DEFAULT NULL;
     customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+    version INT NOT NULL DEFAULT(1),
     total_amount NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     status VARCHAR(20) DEFAULT 'PENDING',
     order_item JSONB, 
@@ -37,16 +39,23 @@ CREATE TABLE audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     purchase_id UUID REFERENCES purchase(id) ON DELETE SET NULL,
     customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
-    type VARCHAR(20),
+    operation_type VARCHAR(20) NOT NULL,
     previous_amount NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     new_amount NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
     amount_delta NUMERIC(12, 2) GENERATED ALWAYS AS (new_amount - previous_amount) STORED,
+    previous_hash VARCHAR(64) NOT NULL,
+    current_hash VARCHAR(64) NOT NULL,
+    reason  TEXT NOT NULL,
+    action_by VARCHAR(100) NOT NULL,
+    
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 -- High-Performance Indexing
 CREATE INDEX idx_interactions_vector_hnsw 
 ON interactions USING hnsw (embedding vector_cosine_ops);
+
+REVOKE UPDATE, DELETE ON audit_logs,purchase FROM PUBLIC;
 
 
 CREATE USER mcp_readonly_user WITH PASSWORD 'postgres';
