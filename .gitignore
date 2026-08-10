@@ -1,5 +1,21 @@
 node_modules/
 dist/
-ิbuild
+ิbuild/
 
 .env
+build/utils/seedInteraction.js
+build/utils/seedAudit.js
+build/tools/tool.js
+build/tools/resource.js
+build/tools/prompt.js
+build/services/interaction.service.js
+build/services/embedding.service.js
+build/services/customer.service.js
+build/services/audit.logs.service.js
+build/model/purchase.js
+build/model/interaction.js
+build/model/customer.js
+build/model/audit_logs.js
+build/index.js
+build/helper/helper.js
+build/db/connection.js
