@@ -1,13 +1,13 @@
 # Overview
 
-ระบบนี้ออกแบบและพัฒนาขึ้นเพื่อทำหน้าที่เป็น MCP (Model Context Protocol) Server ตรงกลางระหว่าง LLM (Large Language Model) และระบบฐานข้อมูลลูกค้า (PostgreSQL)
-เพื่อสนับสนุนการตอบคำถามแบบ Hybrid Query (ผสมผสานระหว่าง Unstructured Semantic Context และ Structured Live Financial Data)
+ระบบนี้ออกแบบและพัฒนาขึ้นเพื่อทำหน้าที่เป็น MCP (Model Context Protocol) Server ตรงกลางระหว่าง LLM (Large Language Model) และระบบฐานข้อมูล (PostgreSQL)
+เพื่อสนับสนุนการตอบคำถามแบบ Hybrid Query (ผสมผสานระหว่าง Semantic Context Live Data/Exact Amount จากประวัติการซื้อ (SQL Aggregation))
 
 ## System & Security Architecture Document
 
- <img width="3244" height="1444" alt="image" src="https://github.com/user-attachments/assets/376febad-05f4-4183-b71a-3a60c1d1a190" />
+<img width="1696" height="2688" alt="image" src="https://github.com/user-attachments/assets/4d4d8d5f-f920-4205-a51b-b8a4507e7145" />
 
-## Stack
+## Stacks
 
 ### Node.js TypeScript
 
@@ -16,12 +16,12 @@
 ### PostgreSQL
 
 - มี Extention pgVector สำหรับการทำ Vector Database
-- รวม Relational Database (SQL Aggregation) และ Vector Store (Semantic Search) ไว้ใน Database เดียว ช่วยลดความซับซ้อน
+- รวม Relational Database และ Vector Store (Semantic Search) ไว้ใน Database เดียว ช่วยลดความซับซ้อน
 
 ### Embedding : huggingface/transformers model Xenova/all-MiniLM-L6-v2
 
-- สามารถ run local ai ผ่านตัว node ได้ใช้พื้นที่ไม่เยอะในการติดตั้งตัว Model
-- Model Xenova/all-MiniLM-L6-v2 รองรับการทำ Embedding ที่ Dimension 384 ไม่ต้องต่อ API ภายนอกและ COST = 0
+- สามารถ run Model Ai จากทางhuggingface ให้สามารถใช้งานภายใน node ได้ใช้พื้นที่ไม่เยอะในการติดตั้งตัว Model และไม่ต้องต่อ API ภายนอก
+- Model Xenova/all-MiniLM-L6-v2 รองรับการทำ Embedding ที่ Dimension 384
 
 ### MCP Transport stdio
 
@@ -46,18 +46,94 @@
 - จำกัดสิทธิ์ของ User ที่ MCP Server ต่อกับ Database
 - กำหนดสิทธิ์ user ที่สร้างขึ้นใหม่ใน Database ไม่ให้สามารถ UPDATE,DELETE TAble ได้
 
+## Database Schema
+
+ฐานข้อมูลออกแบบบน **PostgreSQL** โดยรองรับทั้ง **Relational Structured Data**, **Vector Embeddings (RAG)** และ **Immutable Financial Audit Trail**
+
+### 1. SCHEMA TABLES
+
+```bash
+
+  CREATE TABLE customers (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      first_name VARCHAR(100) NOT NULL,
+      last_name VARCHAR(100) NOT NULL,
+      email VARCHAR(100) UNIQUE NOT NULL,
+      phone VARCHAR(20) NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  );
+
+
+  CREATE TABLE interactions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+      interaction_type VARCHAR(50) NOT NULL DEFAULT 'SUPPORT_CHAT',
+      content TEXT NOT NULL,
+      embedding VECTOR(384),
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  );
+
+
+  CREATE TABLE purchase (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      previous_purchase_id UUID REFERENCES purchase(id) ON DELETE SET NULL,
+      customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+      total_amount NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+      status VARCHAR(20) DEFAULT 'PENDING',
+      order_item JSONB,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  );
+
+
+  CREATE TABLE audit_logs (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      purchase_id UUID REFERENCES purchase(id) ON DELETE SET NULL,
+      customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+      operation_type VARCHAR(20) NOT NULL,
+      previous_amount NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+      new_amount NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+      amount_delta NUMERIC(12, 2) GENERATED ALWAYS AS (new_amount - previous_amount) STORED,
+      previous_hash VARCHAR(64) NOT NULL,
+      current_hash VARCHAR(64) NOT NULL,
+      reason  TEXT NOT NULL,
+      action_by VARCHAR(100) NOT NULL,
+
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  );
+
+  CREATE INDEX idx_interactions_vector_hnsw
+  ON interactions USING hnsw (embedding vector_cosine_ops);
+
+```
+
+### 2. Financial Auditability
+
+### Cryptographic Chaining
+
+กำหนดให้ audit_logs มีการเก็บ hash chain โดยให้เก็บตัวก่อนหน้าและตัวปัจจุบัเอาไว้ ถ้าเกิดมีการแก้ไข chain อย่างเชนตัวที่ 2 เราจะรู้ได้ว่า มีการเปลี่ยนแปลงเพราะ ค่า hash ตัวที่ 2 จะเปลี่ยนแต่ตัวที่ 3 มีค่า hash เดิมของตัวที่ 2 อยู่
+
+### Append Rows only / Access User in Database Puschase & Audit Logs
+
+#### purchase Table
+
+1. จำกัดสิทธิ์ใน Database ให้ UPDATE ได้แค่ status ไม่ให้ UPDATE ข้อมูลอื่นๆ และ DELETE ได้
+2. ถ้าเกิดจะเปลี่ยนแปลงตัวเงินต้องทำการ INSERT ROW ใหม่ เท่านั้นไม่ให้เปลี่ยนค่าได้ทำให้สามารถมีข้อมมูล purchase ที่ย้อนกลับไปดูได้ตลอด
+
+#### audit_logs
+
+1. จำกัดสิทธิ์ไม่ให้ UPDATE หรือ DELETE ได้ เพื่อไม่ให้มีใครสามารถมาเปลี่ยนแปลงข้อมูลได้
+2. ให้สิทธ์ในการ SELECT และ INSERT ROW เวลา purchase มีการเปลี่ยนแปลงเท่านั้น
+
 ## MCP Tools
 
 MCP Tools & Prompts Reference
-search_customer_info / search_customer: ค้นหาข้อมูลพื้นฐานลูกค้า
 
-save_customer_interaction: บันทึกประวัติการสนทนาพร้อมแปลงเป็น Vector Embedding ลงตาราง interactions
-
-search_history_interaction: ค้นหาประวัติการสนทนาแบบ Semantic Search
-
-search_customer_purchase: ดึงประวัติการสั่งซื้อของ Customer
-
-calculate_customer_purchase: คำนวณยอดรวมการใช้จ่ายของ Customer
+1. search_customer_info / search_customer: ค้นหาข้อมูลพื้นฐานลูกค้า
+2. save_customer_interaction: บันทึกประวัติการสนทนาพร้อมแปลงเป็น Vector Embedding ลงตาราง interactions
+3. search_history_interaction: ค้นหาประวัติการสนทนาแบบ Semantic Search
+4. search_customer_purchase: ดึงประวัติการสั่งซื้อของ Customer
+5. calculate_customer_purchase: คำนวณยอดรวมการใช้จ่ายของ Customer
+6. get_audit_logs : ดูประวัติธุรกรรมการเงิน
 
 ## How to Installation
 
@@ -67,16 +143,16 @@ calculate_customer_purchase: คำนวณยอดรวมการใช้
 4. docker compose ps
 5. ต่อ mcp server เข้ากับ LLM Interface
    ```bash
-    {
+     {
       "mcpServers": {
-        "customer-service-docker": {
+        "mcp-customer-chat": {
           "command": "docker",
           "args": [
             "exec",
             "-i",
-            "mcp_customer_server",
+            "mcp_node_server",
             "node",
-            "dist/index.js"
+            "build/index.js"
           ]
         }
       }
@@ -93,17 +169,16 @@ calculate_customer_purchase: คำนวณยอดรวมการใช้
 6. npm run start
 7. ต่อ mcp server เข้ากับ LLM Interface
    ```bash
-    {
+       {
       "mcpServers": {
-        "customer-service-docker": {
-          "command": "docker",
+        "mcp-customer-chat": {
+          "command": "node",
           "args": [
-            "exec",
-            "-i",
-            "mcp_customer_server",
-            "node",
-            "dist/index.js"
-          ]
+            "/path/to/mcp_customer_chat/build/index.js"
+          ],
+          "env": {
+            "DATABASE_URL":"postgresql://mcp_user:postgres@localhost:5432/mcp_db"
+          }
         }
       }
     }
