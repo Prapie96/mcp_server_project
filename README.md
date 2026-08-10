@@ -110,20 +110,22 @@
 
 ### 2. Financial Auditability
 
-### Cryptographic Chaining
+#### Cryptographic Chaining
 
-กำหนดให้ audit_logs มีการเก็บ hash chain โดยให้เก็บตัวก่อนหน้าและตัวปัจจุบัเอาไว้ ถ้าเกิดมีการแก้ไข chain อย่างเชนตัวที่ 2 เราจะรู้ได้ว่า มีการเปลี่ยนแปลงเพราะ ค่า hash ตัวที่ 2 จะเปลี่ยนแต่ตัวที่ 3 มีค่า hash เดิมของตัวที่ 2 อยู่
+ตาราง audit_logs ใช้หลักการ Hash Chaining (คล้ายกับโครงสร้างของ Blockchain) โดยทุกๆ แถวใหม่จะเก็บบันทึกค่า Hash ของแถวก่อนหน้าไว้ในฟิลด์ previous_hash และคำนวณ Hash ของตัวเองเก็บไว้ใน current_hash
+หากมีการพยายามแก้ไขข้อมูลในแถวที่ 2 ค่า current_hash ของแถวที่ 2 จะเปลี่ยนไปจากเดิมทันทีเมื่อคำนวณใหม่ แต่เนื่องจากแถวที่ 3 ถูกล็อกไว้ด้วยค่า previous_hash ที่อ้างอิงถึงค่าเก่าของแถวที่ 2 ทำให้รู้ได้ว่ามีการเปลี่ยนแปลงเกิดขึ้น
+เพราะว่า hash chain ไม่ต่อกัน
 
-### Append Rows only / Access User in Database Puschase & Audit Logs
+#### Append Rows only / Access User in Database Puschase & Audit Logs
 
 #### purchase Table
 
-1. จำกัดสิทธิ์ใน Database ให้ UPDATE ได้แค่ status ไม่ให้ UPDATE ข้อมูลอื่นๆ และ DELETE ได้
-2. ถ้าเกิดจะเปลี่ยนแปลงตัวเงินต้องทำการ INSERT ROW ใหม่ เท่านั้นไม่ให้เปลี่ยนค่าได้ทำให้สามารถมีข้อมมูล purchase ที่ย้อนกลับไปดูได้ตลอด
+1. จำกัดสิทธิ์การใช้งานฐานข้อมูลให้สามารถ UPDATE ได้เฉพาะฟิลด์ status เท่านั้น (เช่น เปลี่ยนจาก PENDING เป็น COMPLETED)ไม่สามารถ UPDATE ข้อมูลทางการเงินหรือรายการสินค้าเด็ดขาด และ ไม่สามารถ DELETE แถวข้อมูล
+2. หากมีการเปลี่ยนแปลงยอดเงินหรือรายการสั่งซื้อ จะต้องทำการ INSERT แถวใหม่ เข้าไปเสมอ โดยอ้างอิงกลับไปยังรายการเดิมผ่าน previous_purchase_id ทำให้เราสามารถ Tracking ประวัติย้อนหลังของธุรกรรมทั้งหมดได้
 
 #### audit_logs
 
-1. จำกัดสิทธิ์ไม่ให้ UPDATE หรือ DELETE ได้ เพื่อไม่ให้มีใครสามารถมาเปลี่ยนแปลงข้อมูลได้
+1. จำกัดสิทธิ์การใช้งานฐานข้อมูลไม่ให้สามารถ UPDATE หรือ DELETE ค่าหรือแถวได้
 2. ให้สิทธ์ในการ SELECT และ INSERT ROW เวลา purchase มีการเปลี่ยนแปลงเท่านั้น
 
 ## MCP Tools
@@ -147,49 +149,81 @@ MCP Tools & Prompts Reference
 
 ## How to Installation
 
-1. git clone https://github.com/Prapie96/mcp_server_project
-2. cd mcp_customer_chat
-3. docker compose up -d --build
-4. docker compose ps
-5. ต่อ mcp server เข้ากับ LLM Interface
-   ```bash
-     {
-      "mcpServers": {
-        "mcp-customer-chat": {
-          "command": "docker",
-          "args": [
-            "exec",
-            "-i",
-            "mcp_node_server",
-            "node",
-            "build/index.js"
-          ]
-        }
-      }
-    }
-   ```
+```bash
+git clone https://github.com/Prapie96/mcp_server_project
+```
+
+```bash
+ cd mcp_customer_chat
+```
+
+```bash
+docker compose up -d --build
+```
+
+```bash
+ docker compose ps
+```
+
+ต่อ mcp server เข้ากับ LLM Interface
+
+```bash
+  {
+   "mcpServers": {
+     "mcp-customer-chat": {
+       "command": "docker",
+       "args": [
+         "exec",
+         "-i",
+         "mcp_node_server",
+         "node",
+         "build/index.js"
+       ]
+     }
+   }
+ }
+```
 
 ## How to Installation (Alternative) run PostgreSQL on Docker run MCP Server on Local
 
-1. git clone https://github.com/Prapie96/mcp_server_project
-2. cd mcp_customer_chat
-3. docker compose up -d mcp_postgres
-4. npm install
-5. npm run build
-6. npm run start
-7. ต่อ mcp server เข้ากับ LLM Interface
-   ```bash
-       {
-      "mcpServers": {
-        "mcp-customer-chat": {
-          "command": "node",
-          "args": [
-            "/path/to/mcp_customer_chat/build/index.js"
-          ],
-          "env": {
-            "DATABASE_URL":"postgresql://mcp_user:postgres@localhost:5432/mcp_db"
-          }
-        }
-      }
-    }
-   ```
+```bash
+ git clone [https://github.com/Prapie96/mcp_server_project](https://github.com/Prapie96/mcp_server_project.git)
+```
+
+```bash
+  cd mcp_customer_chat
+```
+
+```bash
+  docker compose up -d mcp_postgres
+```
+
+```bash
+  npm install
+```
+
+```bash
+  npm run build
+```
+
+```bash
+  npm run start
+```
+
+ต่อ mcp server เข้ากับ LLM Interface
+
+```bash
+  {
+   "mcpServers": {
+     "mcp-customer-chat": {
+       "command": "node",
+       "args": [
+         "/path/to/mcp_customer_chat/build/index.js"
+       ],
+       "env": {
+         "DATABASE_URL":"postgresql://mcp_user:postgres@localhost:5432/mcp_db"
+       }
+     }
+   }
+ }
+```
