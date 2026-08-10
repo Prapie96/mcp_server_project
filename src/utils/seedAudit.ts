@@ -3,13 +3,13 @@ import { PurchaseModel } from "../model/purchase.js";
 import crypto from "crypto";
 export async function seedAuditLogsWithHash() {
   try {
-    console.log("กำลังทำการ seed audit logs");
+    console.log("Seeding audit logs");
     // เช็คว่า seed ไปหรือยัง
     const checkAuditExist = await seedPool.query(
       `SELECT COUNT(*) FROM audit_logs`,
     );
     if (checkAuditExist.rows[0].count > 0) {
-      console.error("มีข้อมูล audit Logs อยู่แล้ว ข้ามการ seed");
+      console.error("Already audit Logs data skip seeding");
       return;
     }
 
@@ -49,20 +49,37 @@ export async function seedAuditLogsWithHash() {
       const target = purchases[0];
       const oldAmount = target.total_amount;
       const updateAmount = oldAmount + 350;
+      // insert new purchase change
+      const sql = `INSERT INTO purchase (previous_purchase_id,customer_id, total_amount, status, order_item)
+                   VALUES($1, $2, $3, $4,$5)
+                   RETURNING id;
+        `;
+      const newPurchaseInsert = await seedPool.query<PurchaseModel>(sql, [
+        target.id,
+        target.customer_id,
+        updateAmount,
+        "COMPLETED",
+        JSON.stringify(target.order_item),
+      ]);
+
+      // insert new Audit_logs
       await insertAuditLogs({
         prevHash,
-        purchaseId: target.id,
+        purchaseId: newPurchaseInsert.rows[0].id,
         customerId: target.customer_id,
         type: "UPDATE",
         prevAmount: oldAmount,
         newAmount: updateAmount,
-        reason: `PURCHASE ID : ${target.id} HAS CHANGED AMOUNT`,
+        reason: `PURCHASE ID : ${target.id} HAS CHANGED AMOUNT INCREASED FROM COST INCREASED`,
         actionBy: "EMPLOYEE",
       });
     }
     if (purchases.length > 1) {
       const target = purchases[1];
       const oldAmount = target.total_amount;
+      const sql = `UPDATE purchase SET status = $1 WHERE id = $2;`;
+      await seedPool.query(sql, ["CANCELLED", target.id]);
+
       await insertAuditLogs({
         prevHash,
         purchaseId: target.id,

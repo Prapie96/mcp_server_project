@@ -1,8 +1,9 @@
 import z from "zod";
 import {
+  calculate_purchase,
   insert_customer_info,
   search_customer_info,
-  searchFirstCustomer,
+  search_purchase,
 } from "../services/customer.service.js";
 import { server } from "../index.js";
 import { pool } from "../db/connection.js";
@@ -12,21 +13,6 @@ import {
 } from "../services/interaction.service.js";
 
 export const registerTools = () => {
-  server.registerTool(
-    "search_customer",
-    {
-      description: "search a first customer info",
-      inputSchema: z.object({ keyword: z.string() }),
-    },
-    async (args: { keyword: string }) => {
-      const { keyword } = args;
-      console.error(`[MCP Tool] กำลังค้นหาข้อมูลลูกค้าจาก: ${keyword}`);
-      const customer = await searchFirstCustomer(keyword);
-      return {
-        content: [{ type: "text", text: JSON.stringify(customer, null, 2) }],
-      };
-    },
-  );
   {
     /**Tool Search Customer from customer data  */
   }
@@ -35,23 +21,26 @@ export const registerTools = () => {
     {
       description: "search about customer information",
       inputSchema: z.object({
-        searchTerm: z.object({
-          email: z.string().optional(),
-          firstName: z.string().optional(),
-          lastName: z.string().optional(),
-          phone: z.string().max(10).optional(),
-        }),
+        keyword: z
+          .string()
+          .describe("The name, email, or phone number to search for"),
+        limit: z
+          .number()
+          .positive()
+          .min(1)
+          .max(10)
+          .default(5)
+          .describe("Number of results to return"),
       }),
     },
-    async ({ searchTerm }) => {
+    async ({ keyword, limit }) => {
       // const { searchTerm } = args;
       try {
         console.error(
-          `[MCP Tool] กำลังค้นหาข้อมูลลูกค้าจาก: ${JSON.stringify(searchTerm)}`,
+          `[MCP Tool] กำลังค้นหาข้อมูลลูกค้าจาก: ${JSON.stringify(keyword)} จำนวน ${limit} คน`,
         );
-        const term = Object.values(searchTerm).find((v) => !!v) ?? "";
 
-        const customer = await search_customer_info(term);
+        const customer = await search_customer_info(keyword, limit);
         return {
           content: [{ type: "text", text: JSON.stringify(customer, null, 2) }],
         };
@@ -77,7 +66,11 @@ export const registerTools = () => {
         "save history interaction's customer into RAG (Vector Database) for searching Context in the future",
       inputSchema: z.object({
         customerId: z.string(),
-        content: z.string(),
+        content: z
+          .string()
+          .describe(
+            "Detailed summary or text content of the interaction to store in vector database",
+          ),
       }),
     },
     async ({ customerId, content }) => {
@@ -114,7 +107,11 @@ export const registerTools = () => {
       description:
         "search history about interaction with customer in RAG (Vector Database)",
       inputSchema: z.object({
-        query: z.string(),
+        query: z
+          .string()
+          .describe(
+            "Search keywords or topic to retrieve interaction context from RAG",
+          ),
       }),
     },
     async ({ query }) => {
@@ -167,22 +164,10 @@ export const registerTools = () => {
         console.error(
           `[MCP Tool] กำลังค้นหาข้อมูลประวัติการซื้อของลูกค้า: ${JSON.stringify(customer_id)}`,
         );
-        const sql = `SELECT 
-        id,
-        customer_id,
-        total_amount,
-        status,
-        order_item,
-        order_item,
-        created_at
-        FROM purchase
-        WHERE customer_id = $1
-        `;
-        const result = await pool.query(sql, [customer_id]);
+
+        const result = await search_purchase(customer_id);
         return {
-          content: [
-            { type: "text", text: JSON.stringify(result.rows, null, 2) },
-          ],
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };
       } catch (error) {
         console.error("Error during using search_customer_purchase", error);
@@ -210,26 +195,10 @@ export const registerTools = () => {
     },
     async ({ customerId }) => {
       try {
-        const sql = `
-          SELECT
-            c.id,
-            c.first_name || ' ' || c.last_name AS customer_name,
-            COUNT(p.id) as total_orders,
-            COALESCE(SUM(p.total_amount),0.00) AS all_purchase_total,
-            COALESCE(AVG(p.total_amount),0.00) AS average_purchase_amount
-          FROM customers c
-          LEFT JOIN purchase p 
-          ON p.customer_id = c.id
-          WHERE c.id = $1
-          GROUP BY c.id ,c.first_name , c.last_name;
-        
-        `;
-        const result = await pool.query(sql, [customerId]);
+        const result = await calculate_purchase(customerId);
 
         return {
-          content: [
-            { type: "text", text: JSON.stringify(result.rows, null, 2) },
-          ],
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };
       } catch (error) {
         console.error("Error during using calculate_customer_purchase", error);
@@ -284,6 +253,66 @@ export const registerTools = () => {
           content: [
             { type: "text", text: JSON.stringify({ error: errorMessage }) },
           ],
+        };
+      }
+    },
+  );
+
+  server.registerTool(
+    "get_audit_logs",
+    {
+      title: "Get Audit Logs",
+      description:
+        "ดึงข้อมูลประวัติจากตาราง audit_logs สามารถกรองตาม purchase_id, customer_id หรือ operation_type ได้",
+      inputSchema: z.object({
+        purchase_id: z.string().optional(),
+        customer_id: z.string().optional(),
+        operation_type: z.enum(["CREATE", "UPDATE", "DELETE"]).optional(),
+        limit: z.number().min(1).positive().default(10),
+      }),
+    },
+    async ({ purchase_id, customer_id, operation_type, limit }) => {
+      try {
+        let query =
+          "SELECT id, purchase_id, customer_id, operation_type, created_at FROM audit_logs WHERE 1=1";
+        const params: any[] = [];
+        let paramIndex = 1;
+
+        if (purchase_id) {
+          query += ` AND purchase_id = $${paramIndex++}`;
+          params.push(purchase_id);
+        }
+        if (customer_id) {
+          query += ` AND customer_id = $${paramIndex++}`;
+          params.push(customer_id);
+        }
+        if (operation_type) {
+          query += ` AND operation_type = $${paramIndex++}`;
+          params.push(operation_type);
+        }
+
+        query += ` ORDER BY created_at DESC LIMIT $${paramIndex}`;
+        params.push(limit);
+
+        const result = await pool.query(query, params);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result.rows, null, 2),
+            },
+          ],
+        };
+      } catch (error: any) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error fetching audit logs: ${error.message}`,
+            },
+          ],
+          isError: true,
         };
       }
     },

@@ -18,6 +18,6 @@ export const createEmbedding = async (sentence: string) => {
     pooling: "mean",
     normalize: true,
   });
-  console.error("Vector from sentence = ", output);
+  // console.error("Vector from sentence = ", output);
   return Array.from(output.data);
 };

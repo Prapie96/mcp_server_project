@@ -6,7 +6,6 @@ import { InteractionModel } from "../model/interaction.js";
 
 interface SaveInteractionInput {
   customerId: string;
-  //   channel: "chat" | "email" | "phone" | "SUPPORT_CHAT";
   content: string;
 }
 
@@ -15,9 +14,6 @@ export async function saveInteraction({
   content,
 }: SaveInteractionInput) {
   try {
-    if (!customerId || !content || content.trim().length === 0) {
-      throw new Error("Customer ID and content are required.");
-    }
     if (content.length > 5000) {
       throw new Error("Interaction content exceeds maximum allowed length.");
     }
