@@ -187,7 +187,7 @@ docker compose up -d --build
 ## How to Installation (Alternative) run PostgreSQL on Docker run MCP Server on Local
 
 ```bash
- git clone [https://github.com/Prapie96/mcp_server_project](https://github.com/Prapie96/mcp_server_project.git)
+ git clone https://github.com/Prapie96/mcp_server_project
 ```
 
 ```bash
