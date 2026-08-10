@@ -130,12 +130,20 @@
 
 MCP Tools & Prompts Reference
 
-1. search_customer_info / search_customer: ค้นหาข้อมูลพื้นฐานลูกค้า
-2. save_customer_interaction: บันทึกประวัติการสนทนาพร้อมแปลงเป็น Vector Embedding ลงตาราง interactions
-3. search_history_interaction: ค้นหาประวัติการสนทนาแบบ Semantic Search
-4. search_customer_purchase: ดึงประวัติการสั่งซื้อของ Customer
-5. calculate_customer_purchase: คำนวณยอดรวมการใช้จ่ายของ Customer
-6. get_audit_logs : ดูประวัติธุรกรรมการเงิน
+- search_customer_info: ค้นหาข้อมูลพื้นฐานลูกค้า
+  - ตัวอย่าง "ขอข้อมูลลูกค้าที่ชื่อ สมชาย หน่อย"
+- save_customer_interaction: บันทึกประวัติการสนทนาพร้อมแปลงเป็น Vector Embedding ลงตาราง interactions
+  - ตัวอย่าง "ลูกค้าแจ้งมาว่า ได้รับของไม่ครบตามที่สั่ง"
+- search_history_interaction: ค้นหาประวัติการสนทนาแบบ Semantic Search
+  - ตัวอย่าง "มีลูกค้าคนไหนที่แจ้งมาไหมว่าได้ของไม่ครบถ้วน"
+- search_customer_purchase: ดึงประวัติการสั่งซื้อของ Customer
+  - ตัวอย่าง "ค้นหาประวัติการซื้อของลูกค้าที่ชื่อ สมชายให้หน่อย"
+- calculate_customer_purchase: คำนวณยอดรวมการใช้จ่ายของ Customer
+  - ตัวอย่าง "คำนวณการซื้อทั้งหมดของลูกค้า สมชายให้หน่อย"
+- get_audit_logs : ดูประวัติธุรกรรมการเงิน
+  - ตัวอย่าง "ตรวจสอบธุรกรรมการเงินให้หน่อย"
+
+ LLM จะทำการตัดสินใจเรียก Tool ต่างๆตามที่ User ส่งเข้ามา
 
 ## How to Installation
 
