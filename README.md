@@ -145,7 +145,7 @@ MCP Tools & Prompts Reference
 - get_audit_logs : ดูประวัติธุรกรรมการเงิน
   - ตัวอย่าง "ตรวจสอบธุรกรรมการเงินให้หน่อย"
 
-LLM จะทำการตัดสินใจเรียก Tool ต่างๆตามที่ User ส่งเข้ามา
+ LLM จะทำการตัดสินใจเรียก Tool ต่างๆตามที่ User ส่งเข้ามา
 
 ## How to Installation
 
