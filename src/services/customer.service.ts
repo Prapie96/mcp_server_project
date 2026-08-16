@@ -70,9 +70,10 @@ export async function calculate_purchase(customer_id: string) {
   const sql = `
           SELECT
             c.id,
-            c.first_name || ' ' || c.last_name AS customer_name,
+            c.first_name,
+            c.last_name,
             COUNT(p.id) as total_orders,
-            COALESCE(SUM(p.total_amount),0.00) AS all_purchase_total,
+            COALESCE(SUM(p.total_amount),0.00) AS all_purchase_total
           FROM customers c
           LEFT JOIN purchase p 
           ON p.customer_id = c.id

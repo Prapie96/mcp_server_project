@@ -19,7 +19,7 @@ export async function seedAuditLogsWithHash() {
       await seedPool.query<PurchaseModel>(selectPurchaseSQL);
     const purchases = purchasesResult.rows;
     if (purchases.length === 0) {
-      console.log("ไม่พบข้อมูล purchase ในระบบ กรุณาตรวจสอบ seed.sql");
+      console.error("ไม่พบข้อมูล purchase ในระบบ กรุณาตรวจสอบ seed.sql");
       return;
     }
 
@@ -48,7 +48,7 @@ export async function seedAuditLogsWithHash() {
     if (purchases.length > 0) {
       const target = purchases[0];
       const oldAmount = target.total_amount;
-      const updateAmount = oldAmount + 350;
+      const updateAmount = 3950;
       // insert new purchase change
       const sql = `INSERT INTO purchase (previous_purchase_id,customer_id, total_amount, status, order_item)
                    VALUES($1, $2, $3, $4,$5)
