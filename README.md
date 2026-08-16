@@ -145,7 +145,7 @@ MCP Tools & Prompts Reference
 - get_audit_logs : ดูประวัติธุรกรรมการเงิน
   - ตัวอย่าง "ตรวจสอบธุรกรรมการเงินให้หน่อย"
 
-LLM จะทำการตัดสินใจเรียก Tool ต่างๆตามที่ User ส่งเข้ามา
+ LLM จะทำการตัดสินใจเรียก Tool ต่างๆตามที่ User ส่งเข้ามา
 
 ## How to Installation
 
@@ -187,7 +187,7 @@ docker compose up -d --build
 ## How to Installation (Alternative) run PostgreSQL on Docker run MCP Server on Local
 
 ```bash
- git clone [https://github.com/Prapie96/mcp_server_project](https://github.com/Prapie96/mcp_server_project.git)
+ git clone https://github.com/Prapie96/mcp_server_project
 ```
 
 ```bash
