@@ -34,7 +34,6 @@ export const registerTools = () => {
       }),
     },
     async ({ keyword, limit }) => {
-      // const { searchTerm } = args;
       try {
         console.error(
           `[MCP Tool] กำลังค้นหาข้อมูลลูกค้าจาก: ${JSON.stringify(keyword)} จำนวน ${limit} คน`,
@@ -274,7 +273,7 @@ export const registerTools = () => {
     async ({ purchase_id, customer_id, operation_type, limit }) => {
       try {
         let query =
-          "SELECT id, purchase_id, customer_id, operation_type, created_at FROM audit_logs WHERE 1=1";
+          "SELECT id, purchase_id, customer_id, operation_type,previous_amount,new_amount,amount_delta,reason,action_by, created_at FROM audit_logs WHERE 1=1";
         const params: any[] = [];
         let paramIndex = 1;
 

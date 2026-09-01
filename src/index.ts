@@ -7,6 +7,10 @@ import { initEmbeddingModel } from "./services/embedding.service.js";
 import { seedAuditLogsWithHash } from "./utils/seedAudit.js";
 import { registerPrompt } from "./tools/prompt.js";
 import { seedInteractionEmbedding } from "./utils/seedInteraction.js";
+import express from "express";
+
+// const app = express();
+// app.use(express.json());
 
 export const server = new McpServer(
   {

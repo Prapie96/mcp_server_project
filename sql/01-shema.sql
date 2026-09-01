@@ -93,3 +93,22 @@ CREATE TRIGGER trg_purchase_append_only
 BEFORE UPDATE OR DELETE ON purchase
 FOR EACH ROW
 EXECUTE FUNCTION purchase_append_only();
+
+CREATE OR REPLACE FUNCTION audit_logs_append_only()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF(TG_OP = 'DELETE') THEN
+        RAISE EXCEPTION 'Deleting audit_logs records is not allowed (Append-Only Table).';
+    END IF;
+
+    IF(TG_OP = 'UPDATE') THEN
+        RAISE EXCEPTION 'UPDATING audit_logs records is not allowed (Append-Only Table).';
+    END IF;
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_audit_logs_append_only
+BEFORE UPDATE OR DELETE ON audit_logs
+FOR EACH ROW
+EXECUTE FUNCTION audit_logs_append_only();
