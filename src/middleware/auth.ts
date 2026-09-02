@@ -2,9 +2,12 @@ import 'dotenv/config'
 import jwt from "jsonwebtoken";
 import type{ Request,Response,NextFunction } from "express";
 
+export type TenantIdType =  "seven_elven" | "cj_more" | "lotus";
+
+
 interface PayloadUser{
     userId:string,
-    tenantId:string,
+    tenantId:TenantIdType,
     name:string,
     role:"Admin"|"Employee"
 }

@@ -3,6 +3,7 @@ import {
   calculate_purchase,
   insert_customer_info,
   search_customer_info,
+  search_customer_info_tenant,
   search_purchase,
 } from "../services/customer.service.js";
 import { server } from "../index.js";
@@ -16,6 +17,7 @@ import { authContext } from "../context/request.context.js";
 export const registerTools = () => {
   {
     /**Tool Search Customer from customer data  */
+    
   }
   server.registerTool(
     "search_customer_info",
@@ -48,8 +50,10 @@ export const registerTools = () => {
             content:[{type:"text",text:"Permission Denied: เฉพาะ Admin เท่านั้นที่ใช้งานเครื่องมือนี้ได้"}]
           }
         }
+        
 
-        const customer = await search_customer_info(keyword, limit);
+        // const customer = await search_customer_info(keyword, limit);
+        const customer = await search_customer_info_tenant(keyword,limit,user.tenantId);
         return {
           content: [{ type: "text", text: JSON.stringify(customer, null, 2) }],
         };

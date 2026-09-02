@@ -1,8 +1,9 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import { TenantIdType } from "../middleware/auth.js";
 
 interface AuthContextInterface{
     userId:string,
-    tenantId:string,
+    tenantId:TenantIdType,
     name:string
     role:"Admin"|"Employee"
 
