@@ -11,6 +11,7 @@ import {
   saveInteraction,
   searchInteraction,
 } from "../services/interaction.service.js";
+import { authContext } from "../context/request.context.js";
 
 export const registerTools = () => {
   {
@@ -23,7 +24,9 @@ export const registerTools = () => {
       inputSchema: z.object({
         keyword: z
           .string()
-          .describe("The name, email, or phone number to search for"),
+          .describe(
+            "id_first_name,last_name, email, or phone number to search for",
+          ),
         limit: z
           .number()
           .positive()
@@ -38,6 +41,13 @@ export const registerTools = () => {
         console.error(
           `[MCP Tool] กำลังค้นหาข้อมูลลูกค้าจาก: ${JSON.stringify(keyword)} จำนวน ${limit} คน`,
         );
+
+        const user = authContext.getStore();
+        if(!user || user.role !== "Admin"){
+          return{
+            content:[{type:"text",text:"Permission Denied: เฉพาะ Admin เท่านั้นที่ใช้งานเครื่องมือนี้ได้"}]
+          }
+        }
 
         const customer = await search_customer_info(keyword, limit);
         return {
@@ -316,4 +326,21 @@ export const registerTools = () => {
       }
     },
   );
+
+  server.registerTool("check_product", {
+    title: "get products api",
+    description: "get products electric from api",
+  }, async () => {
+    const response = await fetch("https://fakeapi.net/products?page=1&limit=10&category=electronics");
+    const data = await response.json();
+  
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(data,null,2),
+        },
+      ],
+    };
+  });
 };
