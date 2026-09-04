@@ -13,6 +13,8 @@ import express from "express";
 import type{ Request,Response,NextFunction } from "express";
 import { authMiddleware } from './middleware/auth.js';
 import { authContext } from './context/request.context.js';
+import auth from "./routes/auth.router.js";
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +37,8 @@ await initEmbeddingModel();
 
 registerPrompt();
 registerTools();
+app.use("/auth",auth);
+
 // async function main() {
 //   // await seedInteractionEmbedding();
 //   // await seedAuditLogsWithHash();

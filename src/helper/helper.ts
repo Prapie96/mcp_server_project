@@ -1,5 +1,5 @@
 import { PoolClient } from "pg";
-import { pool } from "../db/connection.js";
+import { tenantPool } from "../db/connection.js";
 import { TenantIdType } from "../middleware/auth.js";
 
 export const splitText = (text: string, maxLength = 500) => {
@@ -21,7 +21,7 @@ export const splitText = (text: string, maxLength = 500) => {
 
 
 export async function transactionWrapper<T>(tenantId:TenantIdType,callback:(client:PoolClient)=>Promise<T>):Promise<T>{
-  const client = await pool.connect();
+  const client = await tenantPool.connect();
   try {
     // Open Transaction
     await client.query("BEGIN");

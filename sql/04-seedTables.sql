@@ -1,9 +1,9 @@
 SET search_path TO seven_eleven, public;
 
 INSERT INTO customers (id, first_name, last_name, email, phone) VALUES
-('1100bc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'สมชาย', 'เซเว่น', 'somchai.7@example.com', '0811111111'),
+('1100bc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'สมศักดิ์', 'เซเว่น', 'somchai.7@example.com', '0811111111'),
 ('1100bc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'วิชัย', 'รักสะอาด', 'wichai.7@example.com', '0811111122'),
-('1100bc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'กcษณา', 'มั่งมี', 'kritsana.7@example.com', '0811111133');
+('1100bc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'กฤษณา', 'มั่งมี', 'kritsana.7@example.com', '0811111133');
 
 INSERT INTO purchase (id, customer_id, total_amount, status, order_item) VALUES
 ('110039cc-89e1-400b-967e-9f6a55ff0311', '1100bc99-9c0b-4ef8-bb6d-6bb9bd380a11', 150.00, 'COMPLETED', '[{"product": "ข้าวกล่อง 7-11", "qty": 3, "price": 45.00}, {"product": "น้ำอัดลม", "qty": 1, "price": 15.00}]'::jsonb),
@@ -16,7 +16,7 @@ SET search_path TO lotus, public;
 
 INSERT INTO customers (id, first_name, last_name, email, phone) VALUES
 ('2200bc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'สมศรี', 'โลตัส', 'somsri.l@example.com', '0822222211'),
-('2200bc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'จอห์น', 'สมيث', 'john.l@example.com', '0822222222'),
+('2200bc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'จอห์น', 'สมญัติ', 'john.l@example.com', '0822222222'),
 ('2200bc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'มานิตา', 'ใจดี', 'manita.l@example.com', '0822222233');
 
 INSERT INTO purchase (id, customer_id, total_amount, status, order_item) VALUES

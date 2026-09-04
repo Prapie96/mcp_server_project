@@ -1,4 +1,4 @@
-import { pool } from "../db/connection.js";
+import { pool, tenantPool } from "../db/connection.js";
 import { TenantIdType } from "../middleware/auth.js";
 import { Customer } from "../model/customer.js";
 import { PurchaseModel } from "../model/purchase.js";
@@ -8,7 +8,7 @@ export async function search_customer_info_tenant(
   limit: number,
   tenantId:TenantIdType
 ):Promise<Customer[]>{
-  const client = await pool.connect();
+  const client = await tenantPool.connect();
   const searchTerm = `%${search}%`;
   console.log("Tenant ID ที่กำลังค้นหา:", tenantId);
   try {
@@ -37,7 +37,6 @@ export async function search_customer_info_tenant(
   } catch (error) {
       await client.query('ROLLBACK');
       throw error;
-      return [];
   }finally{
     client.release();
   }

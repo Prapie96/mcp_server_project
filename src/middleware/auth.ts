@@ -9,7 +9,8 @@ interface PayloadUser{
     userId:string,
     tenantId:TenantIdType,
     name:string,
-    role:"Admin"|"Employee"
+    role:"Admin"|"Employee",
+    scope:String[]
 }
 
 declare global{
@@ -24,9 +25,17 @@ export const authMiddleware = async(req:Request,res:Response,next:NextFunction)=
     try {
         const token = req.headers["authorization"]?.split(" ")[1];
         if(!token){
+            //  set WWW.Authenticate
+            res.setHeader("WWW.Authenticate",`Bearer resource_metadata=${"http://localhost:8000/auth/.well-known/oauth-protected-resource"}`)
             res.status(401).json("You don't have token");
             return;
         }
+
+        // if no token set to undefined
+        // if(!token){
+        //     req.user = undefined as any;
+        //     return next();
+        // } 
         const decode = jwt.verify(token,process.env.JWT_SECRET_KEY as string) as PayloadUser;
         if(!decode){
              res.status(401).json("You don't have token");

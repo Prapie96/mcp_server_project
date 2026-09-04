@@ -6,6 +6,12 @@ console.log(
   process.env.SEED_DATABASE_URL,
 );
 console.log("connection string database = ", process.env.DATABASE_URL);
+
+export const tenantPool = new Pool({
+  connectionString: process.env.TENANT_DATABASE_URL
+});
+console.log("connection string tenant database = ", process.env.TENANT_DATABASE_URL);
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "",
 });

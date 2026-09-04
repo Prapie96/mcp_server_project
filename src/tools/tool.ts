@@ -13,11 +13,12 @@ import {
   searchInteraction,
 } from "../services/interaction.service.js";
 import { authContext } from "../context/request.context.js";
+import { Customer } from "../model/customer.js";
+import { scopeChecker } from "../utils/scope.check.js";
 
 export const registerTools = () => {
   {
     /**Tool Search Customer from customer data  */
-    
   }
   server.registerTool(
     "search_customer_info",
@@ -45,15 +46,41 @@ export const registerTools = () => {
         );
 
         const user = authContext.getStore();
-        if(!user || user.role !== "Admin"){
-          return{
-            content:[{type:"text",text:"Permission Denied: เฉพาะ Admin เท่านั้นที่ใช้งานเครื่องมือนี้ได้"}]
-          }
-        }
-        
+        console.log("user context = ",user);
 
+        // check scope
+        // const checkScope = scopeChecker("customer:read");
+        // if(checkScope.allowed === false){
+        //   return {
+        //     content:[{type:"text",text:JSON.stringify({status:403,message:"user don't have scope permission"})}]
+        //   }
+        // }
+
+        // if(!user || user.role !== "Admin"){
+        //   return{
+        //     content:[{type:"text",text:"Permission Denied: เฉพาะ Admin เท่านั้นที่ใช้งานเครื่องมือนี้ได้"}]
+        //   }
+        // }
+        
         // const customer = await search_customer_info(keyword, limit);
-        const customer = await search_customer_info_tenant(keyword,limit,user.tenantId);
+        // const customer = await search_customer_info_tenant(keyword,limit,user.tenantId);
+        let customer:Customer[] = [];
+        if (user) {
+          if (user.role !== "Admin") {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: "Permission Denied: เฉพาะ Admin เท่านั้นที่ใช้งานเครื่องมือนี้ได้",
+                },
+              ],
+            };
+          }
+           customer = await search_customer_info_tenant(keyword,limit,user.tenantId);
+        }else{
+           customer = await search_customer_info(keyword, limit);
+        }
+
         return {
           content: [{ type: "text", text: JSON.stringify(customer, null, 2) }],
         };
@@ -331,20 +358,26 @@ export const registerTools = () => {
     },
   );
 
-  server.registerTool("check_product", {
-    title: "get products api",
-    description: "get products electric from api",
-  }, async () => {
-    const response = await fetch("https://fakeapi.net/products?page=1&limit=10&category=electronics");
-    const data = await response.json();
-  
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(data,null,2),
-        },
-      ],
-    };
-  });
+  server.registerTool(
+    "check_product",
+    {
+      title: "get products api",
+      description: "get products electric from api",
+    },
+    async () => {
+      const response = await fetch(
+        "https://fakeapi.net/products?page=1&limit=10&category=electronics",
+      );
+      const data = await response.json();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(data, null, 2),
+          },
+        ],
+      };
+    },
+  );
 };

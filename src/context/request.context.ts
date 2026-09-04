@@ -6,7 +6,7 @@ interface AuthContextInterface{
     tenantId:TenantIdType,
     name:string
     role:"Admin"|"Employee"
-
+    scope:String[]
 }
 export const authContext = new AsyncLocalStorage<AuthContextInterface>();
 
