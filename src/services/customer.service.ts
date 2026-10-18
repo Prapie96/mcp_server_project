@@ -7,6 +7,7 @@ export async function search_customer_info(
   limit: number,
 ): Promise<Customer[]> {
   const searchTerm = `%${search}%`;
+
   const result = await pool.query<Customer>(
     `
           SELECT 
@@ -26,6 +27,7 @@ export async function search_customer_info(
           `,
     [searchTerm, limit],
   );
+
   console.error(
     `[DB] พบลูกค้า ${result.rows.length} คน จากคำค้นหา: ${search} ข้อมูล ${result.rows}`,
   );

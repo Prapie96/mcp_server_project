@@ -11,6 +11,7 @@ import {
   saveInteraction,
   searchInteraction,
 } from "../services/interaction.service.js";
+import { Customer } from "../model/customer.js";
 
 export const registerTools = () => {
   {
@@ -23,7 +24,9 @@ export const registerTools = () => {
       inputSchema: z.object({
         keyword: z
           .string()
-          .describe("The name, email, or phone number to search for"),
+          .describe(
+            "id_first_name,last_name, email, or phone number to search for",
+          ),
         limit: z
           .number()
           .positive()
@@ -36,10 +39,11 @@ export const registerTools = () => {
     async ({ keyword, limit }) => {
       try {
         console.error(
-          `[MCP Tool] กำลังค้นหาข้อมูลลูกค้าจาก: ${JSON.stringify(keyword)} จำนวน ${limit} คน`,
+          `[MCP Tool] Searching Data Customer From: ${JSON.stringify(keyword)} around ${limit} people`,
         );
 
         const customer = await search_customer_info(keyword, limit);
+
         return {
           content: [{ type: "text", text: JSON.stringify(customer, null, 2) }],
         };
@@ -74,16 +78,16 @@ export const registerTools = () => {
     },
     async ({ customerId, content }) => {
       try {
-        console.error(`[MCP Tool] กำลังบันทึกข้อมูลลงRAG`);
+        console.error(`[MCP Tool] Saving Data into RAG `);
         const save_interaction = await saveInteraction({ customerId, content });
         if (save_interaction.success) {
           return {
-            content: [{ type: "text", text: "สำเร็จ" }],
+            content: [{ type: "text", text: "Success" }],
           };
         }
 
         return {
-          content: [{ type: "text", text: "ล้มเหลว" }],
+          content: [{ type: "text", text: "Failed" }],
         };
       } catch (error) {
         console.error("Error during using save_customer_interaction", error);
@@ -116,13 +120,16 @@ export const registerTools = () => {
     async ({ query }) => {
       try {
         console.error(
-          `[MCP Tool] กำลังค้นหาข้อมูลประวัติที่คุยกับลูกค้าเกี่ยวกับ: ${JSON.stringify(query)}`,
+          `[MCP Tool] Searching for customer chat history about: ${JSON.stringify(query)}`,
         );
         const result = await searchInteraction(query);
         if (!result || result.length === 0) {
           return {
             content: [
-              { type: "text", text: "ไม่พบประวัติการสนทนาที่เกี่ยวข้อง" },
+              {
+                type: "text",
+                text: "No relevant conversation history found",
+              },
             ],
           };
         }
@@ -161,7 +168,7 @@ export const registerTools = () => {
     async ({ customer_id }) => {
       try {
         console.error(
-          `[MCP Tool] กำลังค้นหาข้อมูลประวัติการซื้อของลูกค้า: ${JSON.stringify(customer_id)}`,
+          `[MCP Tool] Searching for customer purchase history: ${JSON.stringify(customer_id)}`,
         );
 
         const result = await search_purchase(customer_id);
@@ -232,7 +239,7 @@ export const registerTools = () => {
       const { email, first_name, last_name, phone } = data;
       try {
         console.error(
-          `[MCP Tool] กำลังบันทึกข้อมูลลูกค้าเข้าระบบ: ${JSON.stringify(data)}`,
+          `[MCP Tool] Saving Customer Data into Database: ${JSON.stringify(data)}`,
         );
         const result = await insert_customer_info({
           email,
@@ -262,7 +269,7 @@ export const registerTools = () => {
     {
       title: "Get Audit Logs",
       description:
-        "ดึงข้อมูลประวัติจากตาราง audit_logs สามารถกรองตาม purchase_id, customer_id หรือ operation_type ได้",
+        "Retrieve historical records from the audit_logs table, with filtering options by purchase_id, customer_id, or operation_type.",
       inputSchema: z.object({
         purchase_id: z.string().optional(),
         customer_id: z.string().optional(),
@@ -314,6 +321,29 @@ export const registerTools = () => {
           isError: true,
         };
       }
+    },
+  );
+
+  server.registerTool(
+    "check_product",
+    {
+      title: "get products api",
+      description: "get products electric from api",
+    },
+    async () => {
+      const response = await fetch(
+        "https://fakeapi.net/products?page=1&limit=10&category=electronics",
+      );
+      const data = await response.json();
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(data, null, 2),
+          },
+        ],
+      };
     },
   );
 };
