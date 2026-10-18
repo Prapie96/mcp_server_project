@@ -11,9 +11,7 @@ import { registerPrompt } from "./tools/prompt.js";
 import { seedInteractionEmbedding } from "./utils/seedInteraction.js";
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
-import { authMiddleware } from "./middleware/auth.js";
-import { authContext } from "./context/request.context.js";
-import auth from "./routes/auth.router.js";
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -33,51 +31,18 @@ export const server = new McpServer(
   },
 );
 await initEmbeddingModel();
-
+await seedAuditLogsWithHash();
+await seedInteractionEmbedding();
 registerPrompt();
 registerTools();
-// app.use("/auth",auth);
 
-// async function main() {
-//   // await seedInteractionEmbedding();
-//   // await seedAuditLogsWithHash();
-//   const transport = new StdioServerTransport();
-//   await server.connect(transport);
-//   console.error("Customer MCP Server running on stdio");
-// }
-
-// main().catch((error) => {
-//   console.error("Fatal error in main():", error);
-//   process.exit(1);
-// });
-
-// app.get("/.well-known/oauth-protected-resource", (req, res) => {
-//   res.json({
-//     authorization_servers: [
-//       "https://amaql3mb277pa.scalekit.dev/resources/res_141882531451502851",
-//     ],
-//     bearer_methods_supported: ["header"],
-//     resource: "http://localhost:8000/mcp",
-//     resource_documentation: "http://localhost:8000/mcp/docs",
-//     scopes_supported: ["customer:read", "interaction:read"],
-//   });
-// });
-app.get("/.well-known/oauth-protected-resource", (_req, res) => {
-  res.json({
-    resource: "http://localhost:8000",
-    authorization_servers: ["http://localhost:8080/realms/mcp_demo"],
-  });
-});
-app.post("/mcp", authMiddleware, async (req: Request, res: Response) => {
-  const user = req.user;
+app.post("/mcp", async (req: Request, res: Response) => {
   const transportHTTP = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
   });
   try {
     await server.connect(transportHTTP);
-    await authContext.run(user, async () => {
-      await transportHTTP.handleRequest(req, res, req.body);
-    });
+    await transportHTTP.handleRequest(req, res, req.body);
   } catch (error) {
     console.error("MCP request failed:", error);
 
@@ -93,23 +58,6 @@ app.post("/mcp", authMiddleware, async (req: Request, res: Response) => {
     });
   }
 });
-
-app.get(
-  "/user",
-  authMiddleware,
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const user = req.user;
-      if (!user) {
-        res.status(404).json("Not Found User Data");
-        return;
-      }
-      res.status(200).json(user);
-    } catch (error) {
-      res.status(500).json("Internal Server Error");
-    }
-  },
-);
 
 app.listen(PORT, async () => {
   console.log(`MCP Server is Running on ${PORT}`);

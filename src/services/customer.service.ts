@@ -1,53 +1,13 @@
-import { pool, tenantPool } from "../db/connection.js";
-import { TenantIdType } from "../middleware/auth.js";
+import { pool } from "../db/connection.js";
 import { Customer } from "../model/customer.js";
 import { PurchaseModel } from "../model/purchase.js";
-
-export async function search_customer_info_tenant( 
-  search: string,
-  limit: number,
-  tenantId:TenantIdType
-):Promise<Customer[]>{
-  const client = await tenantPool.connect();
-  const searchTerm = `%${search}%`;
-  console.log("Tenant ID ที่กำลังค้นหา:", tenantId);
-  try {
-  await client.query("BEGIN");
-  await client.query(`SET LOCAL search_path TO ${tenantId} , public`)
-  const query = `
-          SELECT 
-          id,
-          email,
-          first_name,
-          last_name,
-          phone,
-          created_at
-          FROM customers
-          WHERE
-          email ILIKE $1 OR
-          first_name ILIKE $1 OR
-          last_name ILIKE $1 OR
-          phone ILIKE $1 
-          LIMIT $2
-          `;
-  const result = await client.query<Customer>(query,[searchTerm,limit]);
-  await client.query("COMMIT");
-  return result.rows;
-
-  } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-  }finally{
-    client.release();
-  }
-}
 
 export async function search_customer_info(
   search: string,
   limit: number,
 ): Promise<Customer[]> {
   const searchTerm = `%${search}%`;
-  
+
   const result = await pool.query<Customer>(
     `
           SELECT 
@@ -67,7 +27,7 @@ export async function search_customer_info(
           `,
     [searchTerm, limit],
   );
-  
+
   console.error(
     `[DB] พบลูกค้า ${result.rows.length} คน จากคำค้นหา: ${search} ข้อมูล ${result.rows}`,
   );
