@@ -165,25 +165,6 @@ docker compose up -d --build
  docker compose ps
 ```
 
-ต่อ mcp server เข้ากับ LLM Interface
-
-```bash
-  {
-   "mcpServers": {
-     "mcp-customer-chat": {
-       "command": "docker",
-       "args": [
-         "exec",
-         "-i",
-         "mcp_node_server",
-         "node",
-         "build/index.js"
-       ]
-     }
-   }
- }
-```
-
 ## How to Installation (Alternative) run PostgreSQL on Docker run MCP Server on Local
 
 ```bash
@@ -214,16 +195,10 @@ docker compose up -d --build
 
 ```bash
   {
-   "mcpServers": {
-     "mcp-customer-chat": {
-       "command": "node",
-       "args": [
-         "/path/to/mcp_customer_chat/build/index.js"
-       ],
-       "env": {
-         "DATABASE_URL":"postgresql://mcp_user:postgres@localhost:5432/mcp_db"
-       }
-     }
-   }
- }
+  "mcpServers": {
+    "mcp-customer-chat": {
+      "url": "http://localhost:8000/mcp"
+    }
+  }
+}
 ```
